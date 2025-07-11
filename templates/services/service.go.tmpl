@@ -1,0 +1,185 @@
+package {{.ServiceName}}
+
+import (
+	"context"
+	"math"
+	"time"
+	"{{.ModuleName}}/pkg/util"
+	"{{.ModuleName}}/pkg/query"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/models"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/repo"
+	"git.larsa.io/mahdawi/microservices-commons.git/common"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/samber/do"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+// {{.ServiceNameCapitalized}}Svcs defines the interface for {{.ServiceName}} services
+type {{.ServiceNameCapitalized}}Svcs interface {
+	Get(ctx context.Context, skip, limit int64, query *query.Conditions) (*models.{{.ServiceNameCapitalized}}WithPagination, error)
+	GetAll(ctx context.Context, query *query.Conditions) ([]models.{{.ServiceNameCapitalized}}, error)
+	GetById(ctx context.Context, id string) (*models.{{.ServiceNameCapitalized}}, error)
+	Save(ctx context.Context, data *models.{{.ServiceNameCapitalized}}Dto)  (*models.{{.ServiceNameCapitalized}}, error)
+	Update(ctx context.Context, id string, data *models.{{.ServiceNameCapitalized}}Dto) (*models.{{.ServiceNameCapitalized}}, error)
+	Delete(ctx context.Context, id string) error
+}
+
+// {{.ServiceName}}Svcs implements the {{.ServiceNameCapitalized}}Svcs interface
+type {{.ServiceName}}Svcs struct {
+	repo repo.{{.ServiceNameCapitalized}}Repo
+}
+
+// New{{.ServiceNameCapitalized}}Svcs creates a new instance of {{.ServiceNameCapitalized}}Svcs
+func New{{.ServiceNameCapitalized}}Svcs(i *do.Injector) ({{.ServiceNameCapitalized}}Svcs, error) {
+	return &{{.ServiceName}}Svcs{
+		repo: do.MustInvoke[repo.{{.ServiceNameCapitalized}}Repo](i),
+	}, nil
+}
+
+// Get retrieves {{.ServiceName}} records with pagination and filtering
+func (s *{{.ServiceName}}Svcs) Get(ctx context.Context, skip, limit int64, query *query.Conditions) (*models.{{.ServiceNameCapitalized}}WithPagination, error) {
+	if err := query.CheckValid(); err != nil {
+		return nil, err
+	}
+
+	filter, err := query.ConvertToMongo()
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline := []bson.M{
+		{"$match": bson.M{"trash": false}},
+		{"$match": filter},
+	}
+
+	countPipeline := make([]bson.M, len(pipeline))
+	copy(countPipeline, pipeline)
+	count, err := s.repo.Count(ctx, countPipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline = append(pipeline, bson.M{"$sort": bson.M{"_id": -1}})
+	pipeline = append(pipeline, bson.M{"$skip": skip})
+	pipeline = append(pipeline, bson.M{"$limit": limit})
+
+	var result []models.{{.ServiceNameCapitalized}}
+	err = s.repo.Aggregate(ctx, pipeline, func(cur *mongo.Cursor) error {
+		return cur.All(ctx, &result)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var totalPages float64 = math.Ceil(float64(count) / float64(limit))
+	pg := common.Pagination{
+		TotalPages: totalPages,
+		PerPage:    limit,
+		TotalCount: count,
+	}
+
+	return &models.{{.ServiceNameCapitalized}}WithPagination{
+		{{.ServiceNameCapitalized}}s: result,
+		Pagination:                   pg,
+	}, nil
+}
+
+// Get All {{.ServiceName}}s with filtering without pagination
+func (s *{{.ServiceName}}Svcs) GetAll(ctx context.Context, query *query.Conditions) ([]models.{{.ServiceNameCapitalized}}, error) {
+	if err := query.CheckValid(); err != nil {
+		return nil, err
+	}
+
+	filter, err := query.ConvertToMongo()
+	if err != nil {
+		return nil, err
+	}
+	pipeline := []bson.M{
+		{"$match": bson.M{"trash": false}},
+		{"$match": filter},
+	}
+
+	var result []models.{{.ServiceNameCapitalized}}
+	err = s.repo.Aggregate(ctx, pipeline, func(cur *mongo.Cursor) error {
+		return cur.All(ctx, &result)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GetById retrieves a {{.ServiceName}} by ID
+func (s *{{.ServiceName}}Svcs) GetById(ctx context.Context, id string) (*models.{{.ServiceNameCapitalized}}, error) {
+	_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByFilter(ctx, bson.M{"_id": _id, "trash": false})
+}
+
+// Save creates a new {{.ServiceName}}
+func (s *{{.ServiceName}}Svcs) Save(ctx context.Context, data *models.{{.ServiceNameCapitalized}}Dto)  (*models.{{.ServiceNameCapitalized}}, error) {
+	cfg, err := util.GetReqAppCfg(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Handle case where user is not authenticated (public endpoint)
+	var userId primitive.ObjectID
+	if cfg.User != nil {
+		userId = cfg.User.Id
+	} else {
+		userId = primitive.NilObjectID // Use nil ObjectID for anonymous users
+	}
+	{{.ServiceName}} := models.New{{.ServiceNameCapitalized}}(data, userId)
+	if err := s.repo.Add(ctx, {{.ServiceName}}); err != nil {
+		return nil, err
+	}
+	return {{.ServiceName}}, nil
+}
+
+// Update updates an existing {{.ServiceName}}
+func (s *{{.ServiceName}}Svcs) Update(ctx context.Context, id string, data *models.{{.ServiceNameCapitalized}}Dto) (*models.{{.ServiceNameCapitalized}}, error) {
+	// TODO:: Implement Me
+	panic("implement me")
+}
+
+// Delete marks a {{.ServiceName}} as deleted/trash
+func (s *{{.ServiceName}}Svcs) Delete(ctx context.Context, id string) error {
+	cfg, err := util.GetReqAppCfg(ctx)
+	if err != nil {
+		return err
+	}
+
+	_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	// Handle case where user is not authenticated (public endpoint)
+	var userId primitive.ObjectID
+	if cfg.User != nil {
+		userId = cfg.User.Id
+	} else {
+		userId = primitive.NilObjectID // Use nil ObjectID for anonymous users
+	}
+
+	filter := bson.M{"_id": _id}
+	update := bson.M{"$set": bson.M{
+		"trash":     true,
+		"updatedAt": time.Now(),
+		"updatedBy": userId,
+	}}
+
+	_, err = s.repo.Patch(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

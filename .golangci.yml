@@ -1,0 +1,35 @@
+run:
+  timeout: 5m
+  go: "1.21"
+
+linters-settings:
+  revive:
+    min-confidence: 0.8
+  gofmt:
+    simplify: true
+  govet:
+    check-shadowing: true
+  misspell:
+    locale: US
+
+linters:
+  enable:
+    - gofmt
+    - revive
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - misspell
+  disable:
+    - typecheck # can be problematic with embed
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - revive
+        - errcheck
+  max-same-issues: 50

@@ -1,0 +1,23 @@
+package di
+
+import (
+	{{.ServiceName}} "{{.ModuleName}}/pkg/services/{{.ServiceName}}"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/handler"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/repo"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/samber/do"
+)
+
+func Init(i *do.Injector, r *chi.Mux) *do.Injector {
+	// Register repositories
+	do.Provide(i, repo.New{{.ServiceNameCapitalized}}Repo)
+
+	// Register services
+	do.Provide(i, {{.ServiceName}}.New{{.ServiceNameCapitalized}}Svcs)
+
+	// Register handlers
+	handler.New{{.ServiceNameCapitalized}}Handler(i, r)
+
+	return i
+} 

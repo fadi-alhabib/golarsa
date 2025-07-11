@@ -1,0 +1,26 @@
+package repo
+
+import (
+	dbrepo "{{.ModuleName}}/pkg/services/db/repo"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/models"
+
+	"github.com/samber/do"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+type {{.ServiceNameCapitalized}}Repo interface {
+	dbrepo.MainRepo[models.{{.ServiceNameCapitalized}}]
+}
+
+type {{.ServiceName}}Repo struct {
+	dbrepo.MainRepoImpl[models.{{.ServiceNameCapitalized}}]
+}
+
+func New{{.ServiceNameCapitalized}}Repo(i *do.Injector) ({{.ServiceNameCapitalized}}Repo, error) {
+	return &{{.ServiceName}}Repo{
+		MainRepoImpl: dbrepo.MainRepoImpl[models.{{.ServiceNameCapitalized}}]{
+			Db:       do.MustInvoke[*mongo.Client](i),
+			CollName: "{{.ServiceName}}s",
+		},
+	}, nil
+} 

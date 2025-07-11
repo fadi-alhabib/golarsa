@@ -1,0 +1,132 @@
+package handler
+
+import (
+	"{{.ModuleName}}/pkg/helpers"
+	"{{.ModuleName}}/pkg/middleware"
+	"{{.ModuleName}}/pkg/query"
+	{{.ServiceName}} "{{.ModuleName}}/pkg/services/{{.ServiceName}}"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/models"
+	"{{.ModuleName}}/pkg/util"
+	"net/http"
+
+	"github.com/goccy/go-json"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/samber/do"
+)
+
+type {{.ServiceNameCapitalized}}Handler struct {
+	{{.ServiceName}}Svcs     {{.ServiceName}}.{{.ServiceNameCapitalized}}Svcs
+
+}
+
+func New{{.ServiceNameCapitalized}}Handler(i *do.Injector, r *chi.Mux) {
+	h := &{{.ServiceNameCapitalized}}Handler{
+		{{.ServiceName}}Svcs:     do.MustInvoke[{{.ServiceName}}.{{.ServiceNameCapitalized}}Svcs](i),
+	}
+
+	r.Route("/{{.ServiceName}}", func(r chi.Router) {
+		// Public routes
+		r.Get("/", helpers.Make(h.Get))
+		r.Get("/all", helpers.Make(h.GetAll))
+		r.Get("/{id}", helpers.Make(h.GetById))
+		// Protected routes
+		r.With(middleware.Auth("authenticate")).Post("/", helpers.Make(h.Save))
+		r.With(middleware.Auth("authenticate")).Put("/{id}", helpers.Make(h.Update))
+		r.With(middleware.Auth("authenticate")).Delete("/{id}", helpers.Make(h.Delete))
+	})
+
+}
+
+func (h *{{.ServiceNameCapitalized}}Handler) Get(w http.ResponseWriter, r *http.Request) error {
+    ctx, _ := util.AddCtxAppCfg(r)
+
+	skip, limit, err := util.Paginate(r)
+	if err != nil {
+		return err
+	}
+
+	var query query.Conditions
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		return err
+	}
+
+	result, err :=  h.{{.ServiceName}}Svcs.Get(ctx, skip, limit, &query)
+	if err != nil {
+		return err
+	}
+
+	return helpers.WriteJsonCtx(ctx, w, http.StatusOK, result)
+}
+
+func (h *{{.ServiceNameCapitalized}}Handler) GetAll(w http.ResponseWriter, r *http.Request) error {
+	ctx, _ := util.AddCtxAppCfg(r)
+	var query query.Conditions
+	if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+		return err
+	}
+	result, err := h.{{.ServiceName}}Svcs.GetAll(ctx, &query)
+	if err != nil {
+		return err
+	}
+	return helpers.WriteJsonCtx(ctx, w, http.StatusOK, result)
+}
+func (h *{{.ServiceNameCapitalized}}Handler) GetById(w http.ResponseWriter, r *http.Request) error {
+	ctx, _ := util.AddCtxAppCfg(r)
+	id := chi.URLParam(r, "id")
+
+	result, err := h.{{.ServiceName}}Svcs.GetById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return helpers.WriteJsonCtx(ctx, w, http.StatusOK, result)
+}
+
+func (h *{{.ServiceNameCapitalized}}Handler) Save(w http.ResponseWriter, r *http.Request) error {
+	ctx, _ := util.AddCtxAppCfg(r)
+
+	var data models.{{.ServiceNameCapitalized}}Dto
+	if err := json.NewDecoder(r.Body).DecodeContext(ctx, &data); err != nil {
+		return helpers.BadRequest("Invalid JSON format")
+	}
+
+	result, err := h.{{.ServiceName}}Svcs.Save(ctx, &data)
+	if err != nil {
+		return err
+	}
+
+	return helpers.WriteJsonCtx(ctx, w, http.StatusCreated, result)
+}
+
+func (h *{{.ServiceNameCapitalized}}Handler) Update(w http.ResponseWriter, r *http.Request) error {
+	ctx, _ := util.AddCtxAppCfg(r)
+	id := chi.URLParam(r, "id")
+
+	var data models.{{.ServiceNameCapitalized}}Dto
+	if err := json.NewDecoder(r.Body).DecodeContext(ctx, &data); err != nil {
+		return helpers.BadRequest("Invalid JSON format")
+	}
+
+	result, err := h.{{.ServiceName}}Svcs.Update(ctx, id, &data)
+	if err != nil {
+		return err
+	}
+
+	return helpers.WriteJsonCtx(ctx, w, http.StatusOK, result)
+}
+
+
+
+func (h *{{.ServiceNameCapitalized}}Handler) Delete(w http.ResponseWriter, r *http.Request) error {
+	ctx, _ := util.AddCtxAppCfg(r)
+	id := chi.URLParam(r, "id")
+
+	if err := h.{{.ServiceName}}Svcs.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	return helpers.WriteJsonCtx(ctx, w, http.StatusOK, map[string]string{
+		"message": "{{.ServiceNameCapitalized}} deleted successfully",
+	})
+}

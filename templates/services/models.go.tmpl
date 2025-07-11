@@ -1,0 +1,48 @@
+package models
+
+import (
+	"time"
+	"git.larsa.io/mahdawi/microservices-commons.git/common"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+// {{.ServiceNameCapitalized}}Dto for API requests and updates
+type {{.ServiceNameCapitalized}}Dto struct {
+	// TODO: Add service-specific fields here
+}
+
+// {{.ServiceNameCapitalized}} main model
+type {{.ServiceNameCapitalized}} struct {
+	Id primitive.ObjectID `bson:"_id" json:"_id"`
+	{{.ServiceNameCapitalized}}Dto `bson:",inline"`
+	Trash     bool               `bson:"trash" json:"trash"`
+	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
+	CreatedBy primitive.ObjectID `bson:"createdBy" json:"createdBy"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
+	UpdatedBy primitive.ObjectID `bson:"updatedBy" json:"updatedBy"`
+    // TODO: Add service-specific fields here
+}
+
+// Factory Pattern to Create Instance with Shared Values
+func New{{.ServiceNameCapitalized}}(data *{{.ServiceNameCapitalized}}Dto, userId primitive.ObjectID) *{{.ServiceNameCapitalized}} {
+	return &{{.ServiceNameCapitalized}}{
+		{{.ServiceNameCapitalized}}Dto: *data,
+		Id:           primitive.NewObjectID(),
+		Trash:        false,
+		CreatedAt:    time.Now(),
+		CreatedBy:    userId,
+		UpdatedAt: 	  time.Now(),
+		UpdatedBy:    userId,
+	}
+}
+// {{.ServiceNameCapitalized}}WithPagination for paginated responses
+type {{.ServiceNameCapitalized}}WithPagination struct {
+	{{.ServiceNameCapitalized}}s []{{.ServiceNameCapitalized}} `json:"{{.ServiceName}}s"`
+	Pagination                   common.Pagination             `json:"pagination"`
+}
+
+func (entity *{{.ServiceNameCapitalized}}) SoftDelete() {
+	entity.Trash = true
+	entity.UpdatedAt = time.Now()
+}
+// TODO: Add model-specific helper functions here
