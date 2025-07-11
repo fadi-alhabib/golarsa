@@ -6,8 +6,8 @@ import (
 	"time"
 	"{{.ModuleName}}/pkg/util"
 	"{{.ModuleName}}/pkg/query"
-	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/models"
-	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/repo"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}s/models"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}s/repo"
 	"git.larsa.io/mahdawi/microservices-commons.git/common"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"github.com/samber/do"
@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// {{.ServiceNameCapitalized}}Svcs defines the interface for {{.ServiceName}} services
+// {{.ServiceNameCapitalized}}Svcs defines the interface for {{.ServiceName}}s services
 type {{.ServiceNameCapitalized}}Svcs interface {
 	Get(ctx context.Context, skip, limit int64, query *query.Conditions) (*models.{{.ServiceNameCapitalized}}WithPagination, error)
 	GetAll(ctx context.Context, query *query.Conditions) ([]models.{{.ServiceNameCapitalized}}, error)

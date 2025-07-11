@@ -2,7 +2,7 @@ package repo
 
 import (
 	dbrepo "{{.ModuleName}}/pkg/services/db/repo"
-	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/models"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}s/models"
 
 	"github.com/samber/do"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,4 +23,4 @@ func New{{.ServiceNameCapitalized}}Repo(i *do.Injector) ({{.ServiceNameCapitaliz
 			CollName: "{{.ServiceName}}s",
 		},
 	}, nil
-} 
+}

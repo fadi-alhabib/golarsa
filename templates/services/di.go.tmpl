@@ -1,9 +1,9 @@
 package di
 
 import (
-	{{.ServiceName}} "{{.ModuleName}}/pkg/services/{{.ServiceName}}"
-	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/handler"
-	"{{.ModuleName}}/pkg/services/{{.ServiceName}}/repo"
+	{{.ServiceName}} "{{.ModuleName}}/pkg/services/{{.ServiceName}}s"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}s/handler"
+	"{{.ModuleName}}/pkg/services/{{.ServiceName}}s/repo"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/samber/do"
@@ -20,4 +20,4 @@ func Init(i *do.Injector, r *chi.Mux) *do.Injector {
 	handler.New{{.ServiceNameCapitalized}}Handler(i, r)
 
 	return i
-} 
+}
