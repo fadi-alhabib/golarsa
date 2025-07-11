@@ -20,6 +20,7 @@ var templateFS embed.FS
 const (
 	dirPerm  = 0755
 	filePerm = 0644
+	version  = "0.0.1" // Application version
 )
 
 // TemplateData holds data for template processing
@@ -49,6 +50,7 @@ var rootCmd = &cobra.Command{
 	Short: "GoLarsa is a CLI tool for creating service folder structures",
 	Long: `GoLarsa is a CLI application that helps you create standardized
 service folder structures for your Go projects.`,
+	Version: version,
 }
 
 var createServiceCmd = &cobra.Command{
@@ -68,8 +70,22 @@ pkg/services/<service-name>/di/di.go`,
 	Run:  runCreateService,
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version number of GoLarsa",
+	Long:  "All software has versions. This is GoLarsa's",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("GoLarsa v%s\n", version)
+	},
+}
+
 func init() {
+	// Add version flags to root command
+	rootCmd.Flags().BoolP("version", "v", false, "Print version information")
+
+	// Add commands
 	rootCmd.AddCommand(createServiceCmd)
+	rootCmd.AddCommand(versionCmd)
 }
 
 func runCreateService(cmd *cobra.Command, args []string) {
